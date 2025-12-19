@@ -1,0 +1,210 @@
+/* Add Event Modal Styles */
+.add-event-modal {
+  background: var(--color-bg-card);
+  border-radius: var(--radius-xl);
+  width: 100%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-lg);
+}
+
+.event-modal-header {
+  padding: var(--spacing-xl);
+  position: relative;
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+}
+
+.event-modal-header h2 {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: white;
+}
+
+.event-modal-header .modal-close {
+  position: absolute;
+  top: var(--spacing-md);
+  right: var(--spacing-md);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+}
+
+.event-modal-header .modal-close:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.event-form {
+  padding: var(--spacing-xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.title-input {
+  font-size: 1.2rem;
+  font-weight: 500;
+  padding: var(--spacing-md) 0;
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 2px solid var(--color-border-subtle) !important;
+  border-radius: 0 !important;
+}
+
+.title-input:focus {
+  border-bottom-color: var(--color-accent-blue) !important;
+  box-shadow: none !important;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-md);
+}
+
+.form-label {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  margin-bottom: var(--spacing-sm);
+}
+
+/* Toggle */
+.form-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-sm) 0;
+}
+
+.form-toggle span {
+  font-size: 0.95rem;
+  color: var(--color-text-primary);
+}
+
+.toggle-btn {
+  width: 52px;
+  height: 28px;
+  border-radius: 14px;
+  background: var(--color-bg-secondary);
+  position: relative;
+  transition: all var(--transition-fast);
+}
+
+.toggle-btn.active {
+  background: var(--color-accent-blue);
+}
+
+.toggle-slider {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: white;
+  transition: all var(--transition-fast);
+}
+
+.toggle-btn.active .toggle-slider {
+  left: 27px;
+}
+
+/* User Select */
+.user-select {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+}
+
+.user-option {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--color-bg-secondary);
+  border: 2px solid transparent;
+  border-radius: var(--radius-full);
+  font-size: 0.9rem;
+  transition: all var(--transition-fast);
+}
+
+.user-option:hover {
+  background: var(--color-bg-elevated);
+}
+
+.user-option.selected {
+  border-color: var(--color-accent-blue);
+  background: rgba(91, 154, 255, 0.1);
+}
+
+.user-avatar-mini {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: white;
+}
+
+/* Color Picker */
+.color-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+}
+
+.color-option {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 3px solid transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  transition: all var(--transition-fast);
+}
+
+.color-option:hover {
+  transform: scale(1.1);
+}
+
+.color-option.selected {
+  border-color: white;
+  box-shadow: 0 0 0 2px var(--color-bg-primary);
+}
+
+/* Textarea */
+.form-textarea {
+  resize: vertical;
+  min-height: 80px;
+  line-height: 1.5;
+}
+
+/* Modal Actions */
+.add-event-modal .modal-actions {
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+.add-event-modal .btn-primary {
+  color: white;
+}
+
+.add-event-modal .btn-primary:hover {
+  filter: brightness(1.1);
+}

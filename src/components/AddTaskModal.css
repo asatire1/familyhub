@@ -1,0 +1,216 @@
+/* Add Task Modal Styles */
+.add-task-modal {
+  background: var(--color-bg-card);
+  border-radius: var(--radius-xl);
+  width: 100%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--color-border-subtle);
+}
+
+.task-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-xl);
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.task-modal-header h2 {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.task-modal-header .modal-close {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--color-bg-secondary);
+  color: var(--color-text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+}
+
+.task-modal-header .modal-close:hover {
+  background: var(--color-bg-elevated);
+  color: var(--color-text-primary);
+}
+
+.task-form {
+  padding: var(--spacing-xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+/* Title Input */
+.task-form .title-input {
+  font-size: 1.2rem;
+  font-weight: 500;
+  padding: var(--spacing-md);
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-lg);
+}
+
+.task-form .title-input:focus {
+  border-color: var(--color-accent-blue);
+  box-shadow: 0 0 0 3px rgba(91, 154, 255, 0.2);
+}
+
+/* Priority Options */
+.priority-options {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.priority-option {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--color-bg-secondary);
+  border: 2px solid transparent;
+  border-radius: var(--radius-lg);
+  font-size: 0.9rem;
+  transition: all var(--transition-fast);
+}
+
+.priority-option:hover {
+  background: var(--color-bg-elevated);
+}
+
+.priority-option.selected {
+  background: color-mix(in srgb, var(--priority-color) 15%, transparent);
+}
+
+.priority-icon {
+  font-size: 0.9rem;
+}
+
+/* Status Options */
+.status-options {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.status-option {
+  flex: 1;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--color-bg-secondary);
+  border: 2px solid transparent;
+  border-radius: var(--radius-lg);
+  font-size: 0.9rem;
+  text-align: center;
+  transition: all var(--transition-fast);
+}
+
+.status-option:hover {
+  background: var(--color-bg-elevated);
+}
+
+.status-option.selected {
+  background: rgba(91, 154, 255, 0.15);
+  border-color: var(--color-accent-blue);
+}
+
+/* Assignee Options */
+.assignee-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+}
+
+.assignee-option {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--color-bg-secondary);
+  border: 2px solid transparent;
+  border-radius: var(--radius-full);
+  font-size: 0.9rem;
+  transition: all var(--transition-fast);
+}
+
+.assignee-option:hover {
+  background: var(--color-bg-elevated);
+}
+
+.assignee-option.selected {
+  border-color: var(--color-accent-blue);
+  background: rgba(91, 154, 255, 0.1);
+}
+
+.assignee-avatar-mini {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: white;
+}
+
+/* Form Textarea */
+.task-form .form-textarea {
+  resize: vertical;
+  min-height: 80px;
+  line-height: 1.5;
+}
+
+/* Modal Actions */
+.add-task-modal .modal-actions {
+  display: flex;
+  gap: var(--spacing-md);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+.add-task-modal .btn {
+  flex: 1;
+  padding: var(--spacing-md);
+  border-radius: var(--radius-lg);
+  font-weight: 500;
+  transition: all var(--transition-fast);
+}
+
+.add-task-modal .btn-primary {
+  background: var(--color-accent-blue);
+  color: white;
+}
+
+.add-task-modal .btn-primary:hover {
+  filter: brightness(1.1);
+}
+
+.add-task-modal .btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.add-task-modal .btn-secondary {
+  background: var(--color-bg-secondary);
+  color: var(--color-text-primary);
+}
+
+.add-task-modal .btn-secondary:hover {
+  background: var(--color-bg-elevated);
+}
+
+/* Form Error */
+.form-error {
+  color: var(--color-accent-red);
+  font-size: 0.9rem;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: rgba(255, 107, 107, 0.1);
+  border-radius: var(--radius-md);
+}
