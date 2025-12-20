@@ -2,7 +2,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Quicksand:wght@400;500;600;700&display=swap');
 
 :root {
-  /* Colors - Warm, friendly palette */
+  /* Colors - Dark theme (default) */
   --color-bg-primary: #1a1b2e;
   --color-bg-secondary: #232442;
   --color-bg-card: #2a2b4a;
@@ -69,6 +69,27 @@
   --spacing-lg: 24px;
   --spacing-xl: 32px;
   --spacing-2xl: 48px;
+}
+
+/* Light theme */
+[data-theme="light"] {
+  --color-bg-primary: #f5f7fa;
+  --color-bg-secondary: #ffffff;
+  --color-bg-card: #ffffff;
+  --color-bg-card-hover: #f0f2f5;
+  --color-bg-elevated: #ffffff;
+  
+  --color-text-primary: #1a1b2e;
+  --color-text-secondary: #5a5b7d;
+  --color-text-muted: #8a8ba0;
+  
+  --color-border-subtle: rgba(0, 0, 0, 0.06);
+  --color-border-medium: rgba(0, 0, 0, 0.12);
+  
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.12);
+  --shadow-glow: 0 0 30px rgba(91, 154, 255, 0.2);
 }
 
 /* Reset */

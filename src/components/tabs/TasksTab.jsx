@@ -34,6 +34,7 @@ const statusConfig = {
 
 export default function TasksTab() {
   const { 
+    tasks,
     users, 
     currentUser,
     getVisibleTasks,
@@ -51,8 +52,8 @@ export default function TasksTab() {
   const [showFilters, setShowFilters] = useState(false);
   const [taskMenu, setTaskMenu] = useState(null);
 
-  // Get and filter tasks
-  const allTasks = useMemo(() => getVisibleTasks(), [getVisibleTasks]);
+  // Get and filter tasks - depend on tasks array, not function
+  const allTasks = useMemo(() => getVisibleTasks(), [tasks, currentUser]);
   
   const filteredTasks = useMemo(() => {
     return allTasks.filter(task => {

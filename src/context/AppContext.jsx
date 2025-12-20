@@ -2,16 +2,13 @@ import { createContext, useContext, useState, useEffect } from 'react';
 import { 
   collection, 
   doc, 
-  getDocs, 
   addDoc, 
   updateDoc, 
   deleteDoc, 
   onSnapshot,
-  query,
-  where,
   setDoc
 } from 'firebase/firestore';
-import { db } from '../config/firebase';
+import { db, firebaseConfigured } from '../config/firebase';
 
 const AppContext = createContext();
 
@@ -66,6 +63,7 @@ export function AppProvider({ children }) {
   const [privacyMode, setPrivacyMode] = useState(false);
   const [lastActivity, setLastActivity] = useState(Date.now());
   const [slideshowMode, setSlideshowMode] = useState(false);
+  const [actionLoading, setActionLoading] = useState(null); // Track which action is loading
 
   // Generate a unique hub ID for this device/family (stored in localStorage)
   const getHubId = () => {
@@ -81,6 +79,19 @@ export function AppProvider({ children }) {
 
   // Initialize or load data from Firebase
   useEffect(() => {
+    // Check if Firebase is configured
+    if (!firebaseConfigured) {
+      setError('Firebase is not configured. Please add your Firebase credentials to the .env file.');
+      setLoading(false);
+      return;
+    }
+
+    // Store unsubscribe functions
+    const unsubscribers = [];
+    // Track if initialization has been done to prevent duplicate writes
+    let choresInitialized = false;
+    let rewardsInitialized = false;
+
     const initializeApp = async () => {
       try {
         setLoading(true);
@@ -94,6 +105,7 @@ export function AppProvider({ children }) {
           }));
           setUsers(usersData);
         });
+        unsubscribers.push(unsubUsers);
 
         // Subscribe to settings
         const settingsRef = doc(db, 'hubs', hubId, 'config', 'settings');
@@ -105,12 +117,14 @@ export function AppProvider({ children }) {
             setDoc(settingsRef, defaultSettings);
           }
         });
+        unsubscribers.push(unsubSettings);
 
         // Subscribe to chores
         const choresRef = collection(db, 'hubs', hubId, 'chores');
         const unsubChores = onSnapshot(choresRef, async (snapshot) => {
-          if (snapshot.empty) {
-            // Initialize default chores
+          if (snapshot.empty && !choresInitialized) {
+            // Initialize default chores only once
+            choresInitialized = true;
             for (const chore of defaultChores) {
               await addDoc(choresRef, chore);
             }
@@ -118,12 +132,14 @@ export function AppProvider({ children }) {
             setChores(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
           }
         });
+        unsubscribers.push(unsubChores);
 
         // Subscribe to rewards
         const rewardsRef = collection(db, 'hubs', hubId, 'rewards');
         const unsubRewards = onSnapshot(rewardsRef, async (snapshot) => {
-          if (snapshot.empty) {
-            // Initialize default rewards
+          if (snapshot.empty && !rewardsInitialized) {
+            // Initialize default rewards only once
+            rewardsInitialized = true;
             for (const reward of defaultRewards) {
               await addDoc(rewardsRef, reward);
             }
@@ -131,51 +147,44 @@ export function AppProvider({ children }) {
             setRewards(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
           }
         });
+        unsubscribers.push(unsubRewards);
 
         // Subscribe to chore completions
         const completionsRef = collection(db, 'hubs', hubId, 'choreCompletions');
         const unsubCompletions = onSnapshot(completionsRef, (snapshot) => {
           setChoreCompletions(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
         });
+        unsubscribers.push(unsubCompletions);
 
         // Subscribe to tasks
         const tasksRef = collection(db, 'hubs', hubId, 'tasks');
         const unsubTasks = onSnapshot(tasksRef, (snapshot) => {
           setTasks(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
         });
+        unsubscribers.push(unsubTasks);
 
         // Subscribe to events
         const eventsRef = collection(db, 'hubs', hubId, 'events');
         const unsubEvents = onSnapshot(eventsRef, (snapshot) => {
           setEvents(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
         });
+        unsubscribers.push(unsubEvents);
 
         // Subscribe to lists
         const listsRef = collection(db, 'hubs', hubId, 'lists');
         const unsubLists = onSnapshot(listsRef, (snapshot) => {
           setLists(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
         });
+        unsubscribers.push(unsubLists);
 
         // Subscribe to photos
         const photosRef = collection(db, 'hubs', hubId, 'photos');
         const unsubPhotos = onSnapshot(photosRef, (snapshot) => {
           setPhotos(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
         });
+        unsubscribers.push(unsubPhotos);
 
         setLoading(false);
-
-        // Cleanup subscriptions
-        return () => {
-          unsubUsers();
-          unsubSettings();
-          unsubChores();
-          unsubRewards();
-          unsubCompletions();
-          unsubTasks();
-          unsubEvents();
-          unsubLists();
-          unsubPhotos();
-        };
       } catch (err) {
         console.error('Error initializing app:', err);
         setError(err.message);
@@ -184,6 +193,11 @@ export function AppProvider({ children }) {
     };
 
     initializeApp();
+
+    // Cleanup subscriptions on unmount
+    return () => {
+      unsubscribers.forEach(unsub => unsub());
+    };
   }, [hubId]);
 
   // Auto-lock timer
@@ -193,7 +207,7 @@ export function AppProvider({ children }) {
     const checkInactivity = setInterval(() => {
       const inactiveTime = (Date.now() - lastActivity) / 1000 / 60;
       if (inactiveTime >= settings.autoLockMinutes) {
-        logout();
+        setCurrentUser(null); // Direct state update instead of calling logout
       }
     }, 10000); // Check every 10 seconds
 
@@ -782,6 +796,7 @@ export function AppProvider({ children }) {
     photos,
     privacyMode,
     slideshowMode,
+    actionLoading,
     
     // Auth functions
     login,

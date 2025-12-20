@@ -2,10 +2,32 @@ import { useState, useEffect } from 'react';
 import { AppProvider, useApp } from './context/AppContext';
 import LoginScreen from './components/LoginScreen';
 import Dashboard from './components/Dashboard';
+import ErrorBoundary from './components/ErrorBoundary';
 import './styles/global.css';
 
 function AppContent() {
-  const { currentUser, loading, error, privacyMode, setPrivacyMode } = useApp();
+  const { currentUser, loading, error, privacyMode, setPrivacyMode, settings } = useApp();
+
+  // Apply theme to document
+  useEffect(() => {
+    const theme = settings.theme || 'dark';
+    
+    if (theme === 'auto') {
+      // Check system preference
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+      
+      // Listen for system theme changes
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      const handleChange = (e) => {
+        document.documentElement.setAttribute('data-theme', e.matches ? 'dark' : 'light');
+      };
+      mediaQuery.addEventListener('change', handleChange);
+      return () => mediaQuery.removeEventListener('change', handleChange);
+    } else {
+      document.documentElement.setAttribute('data-theme', theme);
+    }
+  }, [settings.theme]);
 
   if (loading) {
     return (
@@ -79,8 +101,10 @@ function PrivacyClock() {
 
 export default function App() {
   return (
-    <AppProvider>
-      <AppContent />
-    </AppProvider>
+    <ErrorBoundary>
+      <AppProvider>
+        <AppContent />
+      </AppProvider>
+    </ErrorBoundary>
   );
 }

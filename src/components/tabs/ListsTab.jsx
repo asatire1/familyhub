@@ -29,6 +29,7 @@ const listIcons = {
 
 export default function ListsTab() {
   const { 
+    lists,
     currentUser,
     getVisibleLists,
     addListItem,
@@ -45,11 +46,11 @@ export default function ListsTab() {
   const [newItemText, setNewItemText] = useState('');
   const [listMenu, setListMenu] = useState(null);
 
-  // Get visible lists
-  const lists = useMemo(() => getVisibleLists(), [getVisibleLists]);
+  // Get visible lists - depend on lists array, not function
+  const visibleLists = useMemo(() => getVisibleLists(), [lists, currentUser]);
 
   // Get selected list data
-  const currentList = selectedList ? lists.find(l => l.id === selectedList) : null;
+  const currentList = selectedList ? visibleLists.find(l => l.id === selectedList) : null;
 
   // Handle add item
   const handleAddItem = async (e) => {
@@ -119,7 +120,7 @@ export default function ListsTab() {
           </div>
 
           <div className="lists-grid">
-            {lists.length === 0 ? (
+            {visibleLists.length === 0 ? (
               <div className="no-lists">
                 <Clipboard size={48} strokeWidth={1.5} />
                 <p>No lists yet</p>
@@ -131,7 +132,7 @@ export default function ListsTab() {
                 )}
               </div>
             ) : (
-              lists.map((list) => {
+              visibleLists.map((list) => {
                 const listType = listIcons[list.type] || listIcons.custom;
                 const checked = getCheckedCount(list);
                 const total = list.items?.length || 0;

@@ -66,6 +66,38 @@ export default function PhotosTab() {
     };
   }, [isPlaying, displayPhotos.length, slideshowInterval]);
 
+  // Compress image to reduce size for Firestore storage
+  const compressImage = (file, maxWidth = 1200, quality = 0.7) => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new window.Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let { width, height } = img;
+          
+          // Scale down if larger than maxWidth
+          if (width > maxWidth) {
+            height = (height * maxWidth) / width;
+            width = maxWidth;
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          // Convert to compressed JPEG
+          const compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
+          resolve(compressedDataUrl);
+        };
+        img.src = event.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
   // Handle file upload
   const handleFileSelect = async (e) => {
     const files = Array.from(e.target.files);
@@ -73,18 +105,36 @@ export default function PhotosTab() {
     for (const file of files) {
       if (!file.type.startsWith('image/')) continue;
       
-      // Convert to base64 for storage (in production, use Firebase Storage)
-      const reader = new FileReader();
-      reader.onload = async (event) => {
-        const photoData = {
-          url: event.target.result,
-          name: file.name,
-          type: file.type,
-          isFavorite: false
-        };
-        await addPhoto(photoData);
-      };
-      reader.readAsDataURL(file);
+      try {
+        // Compress image before storing (to avoid Firestore 1MB limit)
+        const compressedUrl = await compressImage(file);
+        
+        // Check if still too large (Firestore has ~1MB doc limit)
+        if (compressedUrl.length > 900000) {
+          // Try with lower quality
+          const smallerUrl = await compressImage(file, 800, 0.5);
+          if (smallerUrl.length > 900000) {
+            alert(`Image "${file.name}" is too large. Please use a smaller image.`);
+            continue;
+          }
+          await addPhoto({
+            url: smallerUrl,
+            name: file.name,
+            type: 'image/jpeg',
+            isFavorite: false
+          });
+        } else {
+          await addPhoto({
+            url: compressedUrl,
+            name: file.name,
+            type: 'image/jpeg',
+            isFavorite: false
+          });
+        }
+      } catch (err) {
+        console.error('Error processing image:', err);
+        alert(`Failed to upload "${file.name}"`);
+      }
     }
     
     setShowUpload(false);

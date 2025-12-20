@@ -18,6 +18,7 @@ import TasksTab from './tabs/TasksTab';
 import ListsTab from './tabs/ListsTab';
 import PhotosTab from './tabs/PhotosTab';
 import SettingsPanel from './SettingsPanel';
+import PinEntry from './PinEntry';
 import './Dashboard.css';
 
 export default function Dashboard() {
@@ -25,16 +26,20 @@ export default function Dashboard() {
     currentUser, 
     users,
     settings, 
-    logout, 
+    logout,
+    login,
+    verifyPin,
     setPrivacyMode,
-    updateActivity,
-    canManageUsers
+    updateActivity
   } = useApp();
   
   const [activeTab, setActiveTab] = useState('calendar');
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [switchingToUser, setSwitchingToUser] = useState(null);
+  const [showPinEntry, setShowPinEntry] = useState(false);
+  const [pinError, setPinError] = useState(false);
 
   // Update time every minute
   useEffect(() => {
@@ -48,6 +53,39 @@ export default function Dashboard() {
   const handleInteraction = () => {
     updateActivity();
     setShowUserMenu(false);
+  };
+
+  // Handle switching to a different user
+  const handleSwitchUser = (user) => {
+    setShowUserMenu(false);
+    
+    if (user.id === currentUser?.id) {
+      return; // Already logged in as this user
+    }
+
+    if (settings.requirePin && user.pin) {
+      setSwitchingToUser(user);
+      setShowPinEntry(true);
+    } else {
+      login(user);
+    }
+  };
+
+  // Handle PIN submission for user switching
+  const handlePinSubmit = (pin) => {
+    if (verifyPin(switchingToUser.id, pin)) {
+      setShowPinEntry(false);
+      login(switchingToUser);
+      setSwitchingToUser(null);
+    } else {
+      setPinError(true);
+      setTimeout(() => setPinError(false), 500);
+    }
+  };
+
+  const handlePinClose = () => {
+    setShowPinEntry(false);
+    setSwitchingToUser(null);
   };
 
   const tabs = [
@@ -126,10 +164,7 @@ export default function Dashboard() {
                       <button 
                         key={user.id}
                         className={`menu-item ${user.id === currentUser?.id ? 'active' : ''}`}
-                        onClick={() => {
-                          logout();
-                          setShowUserMenu(false);
-                        }}
+                        onClick={() => handleSwitchUser(user)}
                       >
                         <div 
                           className="menu-avatar"
@@ -223,6 +258,18 @@ export default function Dashboard() {
       <AnimatePresence>
         {showSettings && (
           <SettingsPanel onClose={() => setShowSettings(false)} />
+        )}
+      </AnimatePresence>
+
+      {/* PIN Entry for User Switching */}
+      <AnimatePresence>
+        {showPinEntry && switchingToUser && (
+          <PinEntry
+            user={switchingToUser}
+            onSubmit={handlePinSubmit}
+            onClose={handlePinClose}
+            error={pinError}
+          />
         )}
       </AnimatePresence>
     </div>
