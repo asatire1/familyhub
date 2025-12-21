@@ -11,7 +11,8 @@ import {
   User,
   X,
   Edit2,
-  Trash2
+  Trash2,
+  Users
 } from 'lucide-react';
 import AddEventModal from '../AddEventModal';
 import './CalendarTab.css';
@@ -27,7 +28,6 @@ export default function CalendarTab() {
     events, 
     users, 
     currentUser,
-    getEventsForDate,
     getVisibleEvents,
     deleteEvent,
     canManageTasks 
@@ -35,21 +35,72 @@ export default function CalendarTab() {
 
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [viewMode, setViewMode] = useState('month'); // 'month' or 'day'
+  const [viewMode, setViewMode] = useState('week'); // 'week' or 'month' - default to week
   const [showAddEvent, setShowAddEvent] = useState(false);
   const [editingEvent, setEditingEvent] = useState(null);
   const [showEventDetail, setShowEventDetail] = useState(null);
+  
+  // User filter - array of user IDs to show, empty = show all
+  const [selectedUsers, setSelectedUsers] = useState([]);
+
+  // User colors fallback
+  const userColors = [
+    '#5b9aff', '#ff6b9d', '#4ade80', '#ff9f43', 
+    '#a78bfa', '#ff6b6b', '#ffd93d', '#22d3ee'
+  ];
 
   // Get visible events based on user permissions
   const visibleEvents = useMemo(() => getVisibleEvents(), [events, currentUser]);
 
-  // Calendar calculations
+  // Filter events by selected users
+  const filteredEvents = useMemo(() => {
+    if (selectedUsers.length === 0) return visibleEvents;
+    return visibleEvents.filter(event => 
+      selectedUsers.includes(event.userId) || 
+      (event.isFamily && selectedUsers.length === users.length)
+    );
+  }, [visibleEvents, selectedUsers, users]);
+
+  // Toggle user filter
+  const toggleUserFilter = (userId) => {
+    setSelectedUsers(prev => {
+      if (prev.includes(userId)) {
+        return prev.filter(id => id !== userId);
+      } else {
+        return [...prev, userId];
+      }
+    });
+  };
+
+  // Select all users
+  const selectAllUsers = () => {
+    setSelectedUsers([]);
+  };
+
+  // Week calculations
+  const getWeekDays = (date) => {
+    const week = [];
+    const startOfWeek = new Date(date);
+    const day = startOfWeek.getDay();
+    startOfWeek.setDate(startOfWeek.getDate() - day); // Go to Sunday
+    
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(startOfWeek);
+      d.setDate(startOfWeek.getDate() + i);
+      week.push(d);
+    }
+    return week;
+  };
+
+  const weekDays = useMemo(() => getWeekDays(currentDate), [currentDate]);
+
+  // Month calculations
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
   
   const firstDayOfMonth = new Date(year, month, 1);
-  const lastDayOfMonth = new Date(year, month + 1, 0);
   const firstDayWeekday = firstDayOfMonth.getDay();
+  const lastDayOfMonth = new Date(year, month + 1, 0);
   const daysInMonth = lastDayOfMonth.getDate();
   
   // Previous month days to show
@@ -74,7 +125,7 @@ export default function CalendarTab() {
   }
 
   // Next month days to fill the grid
-  const totalCells = 42; // 6 rows * 7 days
+  const totalCells = 42;
   const remainingCells = totalCells - prevMonthDays.length - currentMonthDays.length;
   const nextMonthDays = [];
   for (let i = 1; i <= remainingCells; i++) {
@@ -88,32 +139,30 @@ export default function CalendarTab() {
   const allDays = [...prevMonthDays, ...currentMonthDays, ...nextMonthDays];
 
   // Navigation
-  const goToPrevMonth = () => {
-    setCurrentDate(new Date(year, month - 1, 1));
+  const goToPrev = () => {
+    if (viewMode === 'week') {
+      const newDate = new Date(currentDate);
+      newDate.setDate(newDate.getDate() - 7);
+      setCurrentDate(newDate);
+    } else {
+      setCurrentDate(new Date(year, month - 1, 1));
+    }
   };
 
-  const goToNextMonth = () => {
-    setCurrentDate(new Date(year, month + 1, 1));
+  const goToNext = () => {
+    if (viewMode === 'week') {
+      const newDate = new Date(currentDate);
+      newDate.setDate(newDate.getDate() + 7);
+      setCurrentDate(newDate);
+    } else {
+      setCurrentDate(new Date(year, month + 1, 1));
+    }
   };
 
   const goToToday = () => {
     const today = new Date();
     setCurrentDate(today);
     setSelectedDate(today);
-  };
-
-  const goToPrevDay = () => {
-    const prev = new Date(selectedDate);
-    prev.setDate(prev.getDate() - 1);
-    setSelectedDate(prev);
-    setCurrentDate(prev);
-  };
-
-  const goToNextDay = () => {
-    const next = new Date(selectedDate);
-    next.setDate(next.getDate() + 1);
-    setSelectedDate(next);
-    setCurrentDate(next);
   };
 
   // Check if date is today
@@ -127,10 +176,10 @@ export default function CalendarTab() {
     return date.toDateString() === selectedDate.toDateString();
   };
 
-  // Get events for a date
+  // Get events for a date (filtered)
   const getEventsForDay = (date) => {
     const dateStr = date.toISOString().split('T')[0];
-    return visibleEvents.filter(event => event.date === dateStr);
+    return filteredEvents.filter(event => event.date === dateStr);
   };
 
   // Get user by ID
@@ -149,11 +198,8 @@ export default function CalendarTab() {
   };
 
   // Handle day click
-  const handleDayClick = (dayObj) => {
-    setSelectedDate(dayObj.date);
-    if (dayObj.isOtherMonth) {
-      setCurrentDate(dayObj.date);
-    }
+  const handleDayClick = (date) => {
+    setSelectedDate(date);
   };
 
   // Handle delete event
@@ -164,278 +210,217 @@ export default function CalendarTab() {
     }
   };
 
-  // Selected day events
-  const selectedDayEvents = getEventsForDay(selectedDate);
-
-  // Generate time slots for day view
-  const timeSlots = [];
-  for (let i = 6; i <= 22; i++) {
-    timeSlots.push({
-      hour: i,
-      label: `${i % 12 || 12}:00 ${i >= 12 ? 'PM' : 'AM'}`
-    });
-  }
+  // Get week range string
+  const getWeekRangeString = () => {
+    const start = weekDays[0];
+    const end = weekDays[6];
+    const startMonth = MONTHS[start.getMonth()];
+    const endMonth = MONTHS[end.getMonth()];
+    
+    if (start.getMonth() === end.getMonth()) {
+      return `${start.getDate()} - ${end.getDate()} ${startMonth} ${start.getFullYear()}`;
+    } else {
+      return `${start.getDate()} ${startMonth} - ${end.getDate()} ${endMonth}`;
+    }
+  };
 
   return (
     <div className="calendar-tab">
-      <div className="calendar-layout">
-        {/* Left Panel - Mini Calendar */}
-        <div className="calendar-sidebar">
-          {/* Month Navigation */}
-          <div className="mini-calendar">
-            <div className="mini-cal-header">
-              <h3 className="mini-cal-title">
-                {MONTHS[month]} {year}
-              </h3>
-              <div className="mini-cal-nav">
-                <button onClick={goToPrevMonth}>
-                  <ChevronLeft size={18} />
-                </button>
-                <button onClick={goToNextMonth}>
-                  <ChevronRight size={18} />
-                </button>
-              </div>
-            </div>
+      {/* Header with filters and view toggle */}
+      <div className="calendar-header">
+        {/* User Filters */}
+        <div className="user-filters">
+          <button 
+            className={`filter-btn all ${selectedUsers.length === 0 ? 'active' : ''}`}
+            onClick={selectAllUsers}
+          >
+            <Users size={16} />
+            <span>All</span>
+          </button>
+          {users.map((user, idx) => {
+            const isActive = selectedUsers.includes(user.id);
+            const userColor = user.color || userColors[idx % userColors.length];
+            return (
+              <button
+                key={user.id}
+                className={`filter-btn user ${isActive ? 'active' : ''} ${selectedUsers.length > 0 && !isActive ? 'inactive' : ''}`}
+                style={{ 
+                  '--user-color': userColor,
+                  backgroundColor: isActive ? userColor : undefined,
+                  borderColor: userColor
+                }}
+                onClick={() => toggleUserFilter(user.id)}
+              >
+                <span 
+                  className="filter-avatar" 
+                  style={{ backgroundColor: userColor }}
+                >
+                  {user.avatar || user.name.charAt(0)}
+                </span>
+                <span>{user.name}</span>
+              </button>
+            );
+          })}
+        </div>
 
-            {/* Weekday headers */}
-            <div className="mini-cal-weekdays">
-              {DAYS.map(day => (
-                <div key={day} className="mini-cal-weekday">{day.charAt(0)}</div>
-              ))}
-            </div>
-
-            {/* Days grid */}
-            <div className="mini-cal-days">
-              {allDays.map((dayObj, index) => {
-                const dayEvents = getEventsForDay(dayObj.date);
-                return (
-                  <button
-                    key={index}
-                    className={`mini-cal-day ${dayObj.isOtherMonth ? 'other-month' : ''} ${isToday(dayObj.date) ? 'today' : ''} ${isSelected(dayObj.date) ? 'selected' : ''}`}
-                    onClick={() => handleDayClick(dayObj)}
-                  >
-                    <span>{dayObj.day}</span>
-                    {dayEvents.length > 0 && (
-                      <div className="day-event-dots">
-                        {dayEvents.slice(0, 3).map((event, i) => (
-                          <span 
-                            key={i} 
-                            className="event-dot"
-                            style={{ background: event.color || '#5b9aff' }}
-                          />
-                        ))}
-                      </div>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
+        {/* View Toggle and Navigation */}
+        <div className="calendar-controls">
+          <div className="view-toggle">
+            <button 
+              className={viewMode === 'week' ? 'active' : ''}
+              onClick={() => setViewMode('week')}
+            >
+              Week
+            </button>
+            <button 
+              className={viewMode === 'month' ? 'active' : ''}
+              onClick={() => setViewMode('month')}
+            >
+              Month
+            </button>
           </div>
-
-          {/* Today button */}
-          <button className="today-btn" onClick={goToToday}>
-            <CalendarIcon size={18} />
+          
+          <button className="today-btn-small" onClick={goToToday}>
             Today
           </button>
 
-          {/* Upcoming events */}
-          <div className="upcoming-events">
-            <h4>Upcoming Events</h4>
-            <div className="upcoming-list">
-              {visibleEvents
-                .filter(e => e.date >= new Date().toISOString().split('T')[0])
-                .sort((a, b) => a.date.localeCompare(b.date) || (a.startTime || '').localeCompare(b.startTime || ''))
-                .slice(0, 5)
-                .map(event => {
-                  const eventUser = getUserById(event.userId);
-                  return (
-                    <div 
-                      key={event.id} 
-                      className="upcoming-event"
-                      onClick={() => setShowEventDetail(event)}
-                    >
-                      <div 
-                        className="event-color-bar"
-                        style={{ background: event.color || eventUser?.color || '#5b9aff' }}
-                      />
-                      <div className="event-info">
-                        <span className="event-title">{event.title}</span>
-                        <span className="event-date">
-                          {new Date(event.date + 'T00:00:00').toLocaleDateString('en-US', { 
-                            weekday: 'short', 
-                            month: 'short', 
-                            day: 'numeric' 
-                          })}
-                          {event.startTime && ` • ${formatTime(event.startTime)}`}
-                        </span>
-                      </div>
+          <div className="nav-buttons">
+            <button onClick={goToPrev}>
+              <ChevronLeft size={20} />
+            </button>
+            <span className="current-range">
+              {viewMode === 'week' ? getWeekRangeString() : `${MONTHS[month]} ${year}`}
+            </span>
+            <button onClick={goToNext}>
+              <ChevronRight size={20} />
+            </button>
+          </div>
+
+          {canManageTasks() && (
+            <button 
+              className="add-event-btn"
+              onClick={() => setShowAddEvent(true)}
+            >
+              <Plus size={18} />
+              <span>Add Event</span>
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Week View */}
+      {viewMode === 'week' && (
+        <div className="week-view">
+          <div className="week-header">
+            {weekDays.map((date, idx) => (
+              <div 
+                key={idx} 
+                className={`week-header-day ${isToday(date) ? 'today' : ''} ${isSelected(date) ? 'selected' : ''}`}
+                onClick={() => handleDayClick(date)}
+              >
+                <span className="day-name">{DAYS[date.getDay()]}</span>
+                <span className={`day-number ${isToday(date) ? 'today' : ''}`}>
+                  {date.getDate()}
+                </span>
+              </div>
+            ))}
+          </div>
+          
+          <div className="week-body">
+            {weekDays.map((date, idx) => {
+              const dayEvents = getEventsForDay(date);
+              return (
+                <div 
+                  key={idx} 
+                  className={`week-day-column ${isToday(date) ? 'today' : ''} ${isSelected(date) ? 'selected' : ''}`}
+                  onClick={() => handleDayClick(date)}
+                >
+                  {dayEvents.length === 0 ? (
+                    <div className="no-events-placeholder" />
+                  ) : (
+                    <div className="day-events-list">
+                      {dayEvents
+                        .sort((a, b) => (a.startTime || '').localeCompare(b.startTime || ''))
+                        .map(event => {
+                          const eventUser = getUserById(event.userId);
+                          return (
+                            <motion.div
+                              key={event.id}
+                              className="week-event"
+                              style={{ 
+                                '--event-color': event.color || eventUser?.color || '#5b9aff' 
+                              }}
+                              whileHover={{ scale: 1.02 }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setShowEventDetail(event);
+                              }}
+                            >
+                              <div className="week-event-color" />
+                              <div className="week-event-content">
+                                <span className="week-event-title">{event.title}</span>
+                                {event.startTime && (
+                                  <span className="week-event-time">{formatTime(event.startTime)}</span>
+                                )}
+                              </div>
+                            </motion.div>
+                          );
+                        })}
                     </div>
-                  );
-                })}
-              {visibleEvents.filter(e => e.date >= new Date().toISOString().split('T')[0]).length === 0 && (
-                <p className="no-events">No upcoming events</p>
-              )}
-            </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
+      )}
 
-        {/* Right Panel - Day View */}
-        <div className="day-view">
-          {/* Day View Header */}
-          <div className="day-view-header">
-            <div className="day-view-title">
-              <h2>
-                {selectedDate.toLocaleDateString('en-US', { 
-                  weekday: 'long',
-                  month: 'long', 
-                  day: 'numeric',
-                  year: 'numeric'
-                })}
-              </h2>
-              {isToday(selectedDate) && <span className="today-badge">Today</span>}
-            </div>
-            <div className="day-view-nav">
-              <button onClick={goToPrevDay}>
-                <ChevronLeft size={20} />
-              </button>
-              <button onClick={goToNextDay}>
-                <ChevronRight size={20} />
-              </button>
-              {canManageTasks() && (
-                <button 
-                  className="add-event-btn"
-                  onClick={() => setShowAddEvent(true)}
-                >
-                  <Plus size={20} />
-                  Add Event
-                </button>
-              )}
-            </div>
+      {/* Month View */}
+      {viewMode === 'month' && (
+        <div className="month-view">
+          <div className="month-header">
+            {DAYS.map(day => (
+              <div key={day} className="month-weekday">{day}</div>
+            ))}
           </div>
-
-          {/* Events List for Selected Day */}
-          <div className="day-events">
-            {selectedDayEvents.length === 0 ? (
-              <div className="no-events-day">
-                <CalendarIcon size={48} strokeWidth={1.5} />
-                <p>No events scheduled</p>
-                {canManageTasks() && (
-                  <button 
-                    className="add-first-event"
-                    onClick={() => setShowAddEvent(true)}
-                  >
-                    <Plus size={18} />
-                    Add an event
-                  </button>
-                )}
-              </div>
-            ) : (
-              <div className="events-list">
-                {selectedDayEvents
-                  .sort((a, b) => (a.startTime || '').localeCompare(b.startTime || ''))
-                  .map(event => {
-                    const eventUser = getUserById(event.userId);
-                    return (
-                      <motion.div
-                        key={event.id}
-                        className="event-card"
-                        style={{ 
-                          '--event-color': event.color || eventUser?.color || '#5b9aff' 
-                        }}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        whileHover={{ scale: 1.01 }}
-                        onClick={() => setShowEventDetail(event)}
-                      >
-                        <div className="event-card-color" />
-                        <div className="event-card-content">
-                          <h4 className="event-card-title">{event.title}</h4>
-                          {event.startTime && (
-                            <div className="event-card-time">
-                              <Clock size={14} />
-                              <span>
-                                {formatTime(event.startTime)}
-                                {event.endTime && ` - ${formatTime(event.endTime)}`}
-                              </span>
-                            </div>
-                          )}
-                          {event.location && (
-                            <div className="event-card-location">
-                              <MapPin size={14} />
-                              <span>{event.location}</span>
-                            </div>
-                          )}
-                          {eventUser && (
-                            <div className="event-card-user">
-                              <div 
-                                className="event-user-avatar"
-                                style={{ background: eventUser.color }}
-                              >
-                                {eventUser.avatar || eventUser.name.charAt(0)}
-                              </div>
-                              <span>{eventUser.name}</span>
-                            </div>
-                          )}
-                        </div>
-                        {canManageTasks() && (
-                          <div className="event-card-actions">
-                            <button 
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setEditingEvent(event);
-                                setShowAddEvent(true);
-                              }}
-                            >
-                              <Edit2 size={16} />
-                            </button>
-                            <button 
-                              className="delete-btn"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteEvent(event.id);
-                              }}
-                            >
-                              <Trash2 size={16} />
-                            </button>
-                          </div>
-                        )}
-                      </motion.div>
-                    );
-                  })}
-              </div>
-            )}
-          </div>
-
-          {/* Time Grid (optional visual) */}
-          <div className="time-grid">
-            {timeSlots.map(slot => {
-              const slotEvents = selectedDayEvents.filter(e => {
-                if (!e.startTime) return false;
-                const eventHour = parseInt(e.startTime.split(':')[0]);
-                return eventHour === slot.hour;
-              });
-              
+          
+          <div className="month-grid">
+            {allDays.map((dayObj, index) => {
+              const dayEvents = getEventsForDay(dayObj.date);
               return (
-                <div key={slot.hour} className="time-slot">
-                  <div className="time-label">{slot.label}</div>
-                  <div className="time-slot-content">
-                    {slotEvents.map(event => (
-                      <div 
-                        key={event.id}
-                        className="time-slot-event"
-                        style={{ background: event.color || '#5b9aff' }}
-                        onClick={() => setShowEventDetail(event)}
-                      >
-                        {event.title}
-                      </div>
-                    ))}
+                <div
+                  key={index}
+                  className={`month-day ${dayObj.isOtherMonth ? 'other-month' : ''} ${isToday(dayObj.date) ? 'today' : ''} ${isSelected(dayObj.date) ? 'selected' : ''}`}
+                  onClick={() => handleDayClick(dayObj.date)}
+                >
+                  <span className="month-day-number">{dayObj.day}</span>
+                  <div className="month-day-events">
+                    {dayEvents.slice(0, 3).map(event => {
+                      const eventUser = getUserById(event.userId);
+                      return (
+                        <div 
+                          key={event.id}
+                          className="month-event"
+                          style={{ background: event.color || eventUser?.color || '#5b9aff' }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setShowEventDetail(event);
+                          }}
+                        >
+                          {event.title}
+                        </div>
+                      );
+                    })}
+                    {dayEvents.length > 3 && (
+                      <span className="more-events">+{dayEvents.length - 3} more</span>
+                    )}
                   </div>
                 </div>
               );
             })}
           </div>
         </div>
-      </div>
+      )}
 
       {/* Add/Edit Event Modal */}
       <AnimatePresence>
@@ -484,7 +469,7 @@ export default function CalendarTab() {
                 <div className="event-detail-row">
                   <CalendarIcon size={20} />
                   <span>
-                    {new Date(showEventDetail.date + 'T00:00:00').toLocaleDateString('en-US', {
+                    {new Date(showEventDetail.date + 'T00:00:00').toLocaleDateString('en-GB', {
                       weekday: 'long',
                       month: 'long',
                       day: 'numeric',
