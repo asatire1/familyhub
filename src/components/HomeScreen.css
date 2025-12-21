@@ -1,10 +1,10 @@
 .home-screen {
-  min-height: 100vh;
+  height: 100vh;
   display: flex;
   flex-direction: column;
   background: var(--color-bg-primary);
   position: relative;
-  overflow-x: hidden;
+  overflow: hidden;
 }
 
 /* Background */
@@ -33,6 +33,7 @@
   padding: 1.5rem 2rem;
   position: relative;
   z-index: 1;
+  flex-shrink: 0;
 }
 
 .header-left {
@@ -138,10 +139,11 @@
 /* Main Content */
 .home-content {
   flex: 1;
-  padding: 0 2rem 2rem;
+  padding: 0 2rem 1rem;
   position: relative;
   z-index: 1;
   overflow-y: auto;
+  min-height: 0;
 }
 
 /* Sections */
@@ -415,7 +417,8 @@
   background: var(--color-bg-secondary);
   border-top: 1px solid var(--color-border-subtle);
   position: relative;
-  z-index: 1;
+  z-index: 10;
+  flex-shrink: 0;
 }
 
 .footer-users {
