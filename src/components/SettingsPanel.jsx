@@ -19,6 +19,7 @@ import {
   Star,
   Check
 } from 'lucide-react';
+import AddUserModal from './AddUserModal';
 import './SettingsPanel.css';
 
 const themeOptions = [
@@ -39,6 +40,7 @@ export default function SettingsPanel({ onClose }) {
 
   const [activeSection, setActiveSection] = useState('general');
   const [editingUser, setEditingUser] = useState(null);
+  const [showAddUser, setShowAddUser] = useState(false);
   const [familyName, setFamilyName] = useState(settings.familyName || 'Our Family');
   const [saving, setSaving] = useState(false);
 
@@ -219,10 +221,9 @@ export default function SettingsPanel({ onClose }) {
                 </div>
 
                 {canManageUsers() && (
-                  <button className="add-member-btn" onClick={onClose}>
+                  <button className="add-member-btn" onClick={() => setShowAddUser(true)}>
                     <Plus size={18} />
                     Add Family Member
-                    <span className="hint">(from login screen)</span>
                   </button>
                 )}
               </div>
@@ -378,6 +379,13 @@ export default function SettingsPanel({ onClose }) {
           <span className="copyright">Made with ❤️ for families</span>
         </div>
       </motion.div>
+
+      {/* Add User Modal */}
+      <AnimatePresence>
+        {showAddUser && (
+          <AddUserModal onClose={() => setShowAddUser(false)} />
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }
