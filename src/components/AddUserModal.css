@@ -157,6 +157,19 @@
 }
 
 /* Role Options */
+.role-notice {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: rgba(91, 154, 255, 0.1);
+  border: 1px solid rgba(91, 154, 255, 0.3);
+  border-radius: var(--radius-md);
+  color: var(--color-accent-blue);
+  font-size: 0.85rem;
+  margin-bottom: var(--spacing-sm);
+}
+
 .role-options {
   display: flex;
   flex-direction: column;
@@ -179,13 +192,18 @@
   min-height: var(--touch-target-comfortable);
 }
 
-.role-option:hover {
+.role-option:hover:not(.disabled) {
   background: var(--color-bg-elevated);
 }
 
 .role-option.selected {
   border-color: var(--color-accent-blue);
   background: rgba(91, 154, 255, 0.1);
+}
+
+.role-option.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 .role-label {

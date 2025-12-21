@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { AppProvider, useApp } from './context/AppContext';
-import LoginScreen from './components/LoginScreen';
+import HomeScreen from './components/HomeScreen';
 import Dashboard from './components/Dashboard';
 import ErrorBoundary from './components/ErrorBoundary';
 import './styles/global.css';
@@ -60,8 +60,8 @@ function AppContent() {
     );
   }
 
-  // Show login or dashboard
-  return currentUser ? <Dashboard /> : <LoginScreen />;
+  // Show home screen or dashboard
+  return currentUser ? <Dashboard /> : <HomeScreen />;
 }
 
 function PrivacyClock() {

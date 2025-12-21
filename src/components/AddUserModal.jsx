@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { X, Check } from 'lucide-react';
+import { X, Check, Shield } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import './AddUserModal.css';
 
@@ -11,10 +11,22 @@ const userColors = [
 
 const avatarEmojis = ['👨', '👩', '👦', '👧', '🧑', '👴', '👵', '🐶', '🐱', '🦊'];
 
-export default function AddUserModal({ onClose, editUser = null }) {
-  const { addUser, updateUser } = useApp();
+export default function AddUserModal({ onClose, editUser = null, requireAdult = false }) {
+  const { addUser, updateUser, users, currentUser } = useApp();
+  
+  // Check if there are any adults
+  const adults = users.filter(u => u.role === 'admin' || u.role === 'parent');
+  const hasAdults = adults.length > 0;
+  
+  // Determine if current user can add users (must be adult, or no adults exist yet)
+  const isCurrentUserAdult = currentUser?.role === 'admin' || currentUser?.role === 'parent';
+  const canAddUsers = !hasAdults || isCurrentUserAdult || !currentUser;
+  
+  // If requireAdult is true, only allow admin/parent roles
+  const defaultRole = requireAdult ? 'admin' : (hasAdults ? 'child' : 'admin');
+  
   const [name, setName] = useState(editUser?.name || '');
-  const [role, setRole] = useState(editUser?.role || 'child');
+  const [role, setRole] = useState(editUser?.role || defaultRole);
   const [pin, setPin] = useState(editUser?.pin || '');
   const [color, setColor] = useState(editUser?.color || userColors[0]);
   const [avatar, setAvatar] = useState(editUser?.avatar || '');
@@ -119,25 +131,37 @@ export default function AddUserModal({ onClose, editUser = null }) {
           {/* Role select */}
           <div className="form-group">
             <label className="form-label">Role</label>
+            {requireAdult && (
+              <div className="role-notice">
+                <Shield size={16} />
+                <span>First user must be an adult to manage the family hub</span>
+              </div>
+            )}
             <div className="role-options">
               {[
-                { value: 'admin', label: 'Admin', desc: 'Full access to everything' },
-                { value: 'parent', label: 'Parent', desc: 'Manage tasks & view all' },
-                { value: 'child', label: 'Child', desc: 'Own tasks & earn points' }
-              ].map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  className={`role-option ${role === option.value ? 'selected' : ''}`}
-                  onClick={() => setRole(option.value)}
-                >
-                  <span className="role-label">{option.label}</span>
-                  <span className="role-desc">{option.desc}</span>
-                  {role === option.value && (
-                    <Check size={18} className="role-check" />
-                  )}
-                </button>
-              ))}
+                { value: 'admin', label: 'Admin', desc: 'Full access to everything', isAdult: true },
+                { value: 'parent', label: 'Parent', desc: 'Manage tasks & view all', isAdult: true },
+                { value: 'child', label: 'Child', desc: 'Own tasks & earn points', isAdult: false }
+              ].map((option) => {
+                // Disable child option if requireAdult is true
+                const isDisabled = requireAdult && !option.isAdult;
+                
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    className={`role-option ${role === option.value ? 'selected' : ''} ${isDisabled ? 'disabled' : ''}`}
+                    onClick={() => !isDisabled && setRole(option.value)}
+                    disabled={isDisabled}
+                  >
+                    <span className="role-label">{option.label}</span>
+                    <span className="role-desc">{option.desc}</span>
+                    {role === option.value && (
+                      <Check size={18} className="role-check" />
+                    )}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
