@@ -414,22 +414,9 @@ export default function HomeScreen() {
                 )}
               </motion.button>
             ))}
-            
-            {/* Add user button - only if adults exist */}
-            <motion.button
-              className="footer-user add-user"
-              onClick={() => setShowAddUser(true)}
-              whileHover={{ scale: 1.05, y: -2 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <div className="footer-avatar add">
-                <UserPlus size={20} />
-              </div>
-              <span>Add</span>
-            </motion.button>
           </div>
           
-          {/* Settings button */}
+          {/* Settings button - requires adult login */}
           <motion.button
             className="settings-btn"
             onClick={() => {
